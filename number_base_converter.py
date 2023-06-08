@@ -59,29 +59,41 @@ class number_base:
         val = self.to_decimal() # firstly convert value to decimal
         
         # Determine number of digits needed for new base
-        i = 1 # iterator for number of digits required (start at power 1 as power 0 can use power 1 to solve)
+        max_power = 1 # iterator for number of digits required (start at power 1 as power 0 can use power 1 to solve)
         flag = False # initialise flag as false to be made true when we find the maximum power
         while flag == False:
-            if int(base_to ** i / val) == 0: # if the floor of base ^ i / val is 0 then we need more power
-                i += 1
+            if int(base_to ** max_power / val) == 0: # if the floor of base ^ i / val is 0 then we need more power
+                max_power += 1
                 continue
             else:
                 flag = True # we have enough power so exit loop
         
-        # Now we need to find the values, place in a list 'i' elements long
-        #digits = [0] * i # initialise list
-        #for j in digits:
-        #    digits[j] # get powers needed to make the number in the particular base
+        # Place in a list 'max_power' elements long
+        powers = list(range(max_power)) # initialise list
+        for i in powers:
+            powers[i] = base_to ** powers[i] # get powers needed to make the number in the particular base
+        powers = powers[::-1] # reverse order so we start with highest powers first
         
+        # Use integer division and mods to loop through and extract the digits in 'base_to'
+        digits = [0] * len(powers) # initialise output (same length as powers)
+        num_left = val # initialise the number left to assign (start with the whole thing)
+        for i in range(len(powers)):
+            digits[i] = num_left // powers[i] # assign to digits[0]
+            num_left = num_left % powers[i] # pass on to next iteration of the loop
         
-        return(val)
+        # Concatenate digits together for output
+        output = ""
+        for i in digits:
+            output += str(i)
+        
+        return(output)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Testing
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 test = number_base("24", 12)
 
-print(test.from_decimal(9))
+print(test.from_decimal(10))
 
 #print(test.value)
 #print(test.base)
