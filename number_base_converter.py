@@ -55,7 +55,7 @@ class number_base:
         return(total)
     
     # Function to convert from decimal to any base
-    def from_decimal(self, base_to):
+    def show_in_base(self, base_to):
         val = self.to_decimal() # firstly convert value to decimal
         
         # Determine number of digits needed for new base
@@ -87,13 +87,75 @@ class number_base:
             output += str(i)
         
         return(output)
+    
+    # Functions to display in all bases
+    # Function to show in binary/base 2
+    def show_in_binary(self):
+        return(self.show_in_base(2))
+    
+    # Function to show in ternary/base 3
+    def show_in_ternary(self):
+        return(self.show_in_base(3))
+    
+    # Function to show in quarternary/base 4
+    def show_in_quarternary(self):
+        return(self.show_in_base(4))
+    
+    # Function to show in quinary/base 5
+    def show_in_quinary(self):
+        return(self.show_in_base(5))
+    
+    # Function to show in seximal/base 6
+    def show_in_seximal(self):
+        return(self.show_in_base(6))
+    
+    # Function to show in septimal/base 7
+    def show_in_septimal(self):
+        return(self.show_in_base(7))
+    
+    # Function to show in octal/base 8
+    def show_in_octal(self):
+        return(self.show_in_base(8))
+    
+    # Function to show in nonary/base 9
+    def show_in_nonary(self):
+        return(self.show_in_base(9))
+    
+    # Function to show in decimal/base 10
+    def show_in_decimal(self):
+        return(self.show_in_base(10)) # don't use to_decimal as we want str output for consistency
+    
+    # Function to show in elevenary/base 11
+    def show_in_elevenary(self):
+        return(self.show_in_base(11))
+    
+    # Function to show in dozenal/base 12
+    def show_in_dozenal(self):
+        return(self.show_in_base(12))
+
+    # Function to change base of number
+    def change_value(self, value_to):
+        self.value = number_base(value_to, self.base).show_in_base(self.base)
+        return()
+    
+    # Function to change base of number
+    def change_base(self, base_to):
+        self.value = self.show_in_base(base_to)
+        self.base = base_to
+        return()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Testing
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 test = number_base("24", 12)
 
-print(test.from_decimal(10))
+print(test)
+test.change_base(8)
+print(test)
+test.change_value("33")
+print(test)
+print(test.show_in_decimal())
+
 
 #print(test.value)
 #print(test.base)
