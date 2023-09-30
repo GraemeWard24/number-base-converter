@@ -17,52 +17,93 @@ Created on Tue May 9 2023
 class number_base:
     # Set value of number and base of number in input
     def __init__(self, value, base):
+        '''Set value (string) and base (integer) to set up the number base object
+        Perform checks of inputs (types and values) before allowing the user to continue'''
         
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
         # Initial checks
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-        # Check if valid base
+        # Base
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+        # Check if valid base (integer between 2 and 12)
+        if type(base) is not int:
+            raise TypeError(f'Base should be integer, not {type(base)}')
+        
         if base < 2 or base > 12:
-            print(f'Please input a base between 2 and 12. Selected {base}')
-            return
-            # sys.exit()
-        self.base = base
+            raise ValueError(f'Please input a base between 2 and 12. Selected {base}.')
+            
+        # If valid, set base
+        self._base = base
         
-        # Check if value is valid
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+        # Value
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+        # Check if valid value (string with valid digits depending on selected base)
+        if type(value) is not str:
+            raise TypeError(f'Value should be string, not {type(value)}')
+
+        # Check if value is valid (allowable characters depend on base. '-' allowed at the front only)
         # Make list of valid digits depending on base
-        # Need to convert integers to strings
-        valid_digits_int = list(range(1, 10))
-        valid_digits = [''] * len(valid_digits_int)
-        for i in range(0, len(valid_digits_int)):
-            valid_digits[i] = str(valid_digits_int[i])
-        
+        valid_digits = list(range(1, min(base, 10))) # valid digits are 1 to (base - 1), or 9. 10, 11 taken care of
+        valid_digits = [str(i) for i in valid_digits] # convert to strings
+             
         # Add X and E if the base is high enough
         if base > 10:
-            valid_digits.append("X")
+            valid_digits.append('X')
         if base > 11:
-            valid_digits.append("E")
+            valid_digits.append('E')
             
-        # Check each digit to see if it is valid
-        for i in value:
-            if i not in valid_digits:
-                print(f'Non verified digit is {i}')
-                return
-                # sys.exit()
-        self.value = value
+        # Check each digit to see if it is valid - first digit can be '-' for negatives
+        is_valid = [i in valid_digits for i in value] # get boolean for allowable elements
         
-
+        # First element can be '-' for negatives
+        if value[0] == '-':
+            is_valid[0] = True
+        
+        # If any element of is_valid is False then we have bad characters
+        # Show them and produce error
+        if not all(is_valid):
+            non_valid = [] # initialise non-valid list to output
+            for i in range(len(value)): # loop through characters of value
+                if not is_valid[i]:
+                   non_valid.append(value[i])
+            raise ValueError(f"Non verified digits identified. They are {non_valid} from input '{value}'")
+        
+        # If valid, set value
+        self._value = value
     
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+    # Restrict access to changing value and base using nb.value or nb.base = foo
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+    @property
+    def base(self):
+        return self._base
+
+    @base.setter
+    def base(self, value):
+        raise AttributeError('Use change_base() method to change base')
+            
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        raise AttributeError('Use change_value() method to change value')
+    
+    # String output is information about the value and the base
     def __str__(self):
         return f'{self.value} in base {self.base}'
     
-    # Currently not working    
-    # def __int__(self):
-    #     return f'{self.to_decimal()}'
+    # Integer output is the value converted to decimal
+    def __int__(self):
+        return self.convert_to_decimal()
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # Function to convert from a base to decimal
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     def convert_to_decimal(self):
+        '''Convert the value to decimal, crucial for changing bases'''
         # Initialise power and output for looping
         power = 0 # first power
         total = 0 # output sum
@@ -71,14 +112,14 @@ class number_base:
         for char in self.value[::-1]: # work in reverse in increasing powers
             
             # Convert numbers greater than ten to numeric if the base allows it
-            if (self.base > 10) & (char == "X"):
+            if (self.base > 10) & (char == 'X'):
                 char = 10
-            if (self.base > 11) & (char == "E"):
+            if (self.base > 11) & (char == 'E'):
                 char = 11
                 
             # Check if any characters > base (need to do the same for X and E?)
             if int(char) > self.base:
-                print("char " + char + " is greater than base ", str(self.base))
+                print('char ' + char + ' is greater than base ', str(self.base))
                 return
     
             # Calculate output in decimal and add to total
@@ -92,6 +133,7 @@ class number_base:
     # Function to convert to any base
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     def show_in_base(self, base_to):
+        '''Allow the user to see the number in any base, does not change the number base object'''
         val = self.convert_to_decimal() # firstly convert value to decimal
         
         # Determine number of digits needed for new base
@@ -118,14 +160,14 @@ class number_base:
             num_left = num_left % powers[i] # pass on to next iteration of the loop
             
         # Concatenate digits together for output
-        output = ""
+        output = ''
         for i in digits:
             # Replace decimal digit with number base symbol
             if base_to > 10:
                 if i == 10:
-                    i = "X"
+                    i = 'X'
                 elif i == 11:
-                    i = "E"
+                    i = 'E'
             
             # Append
             output += str(i)
@@ -133,7 +175,7 @@ class number_base:
         return(output)
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-    # Functions to display in all bases
+    # Functions to display in all bases using base names, not numbers
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # Function to show in binary/base 2
     def show_in_binary(self):
@@ -180,21 +222,60 @@ class number_base:
         return(self.show_in_base(12))
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-    # Function to change base of number
+    # Function to change value of number base object
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-    # NEED TO ADD IN INITIAL CHECKS
     def change_value(self, value_to):
-        # Set value in current base, call class to get value in that base
-        self.value = value_to
-        # self.value = number_base(value_to, self.base).show_in_base(self.base)
+        '''Allow the user to change the value of the number base object'''
+        # Check if valid value (string with valid digits depending on selected base)
+        if type(value_to) is not str:
+            raise TypeError(f'Value should be string, not {type(value_to)}')
+
+        # Check if value is valid (allowable characters depend on base. '-' allowed at the front only)
+        # Make list of valid digits depending on base
+        valid_digits = list(range(1, min(self.base, 10))) # valid digits are 1 to (base - 1), or 9. 10, 11 taken care of
+        valid_digits = [str(i) for i in valid_digits] # convert to strings
+             
+        # Add X and E if the base is high enough
+        if self.base > 10:
+            valid_digits.append('X')
+        if self.base > 11:
+            valid_digits.append('E')
+            
+        # Check each digit to see if it is valid - first digit can be '-' for negatives
+        is_valid = [i in valid_digits for i in value_to] # get boolean for allowable elements
+        
+        # First element can be '-' for negatives
+        if value_to[0] == '-':
+            is_valid[0] = True
+        
+        # If any element of is_valid is False then we have bad characters
+        # Show them and produce error
+        if not all(is_valid):
+            non_valid = [] # initialise non-valid list to output
+            for i in range(len(value_to)): # loop through characters of value
+                if not is_valid[i]:
+                   non_valid.append(value_to[i])
+            raise ValueError(f"Non verified digits identified. They are {non_valid} from input '{value_to}'")
+            
+        # Just update value once checks are complete
+        self._value = value_to
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-    # Function to change base of number
+    # Function to change base of number base object
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-    # NEED TO ADD IN INITIAL CHECKS
     def change_base(self, base_to):
-        self.value = self.show_in_base(base_to)
-        self.base = base_to
+        '''Allow the user to change the base of the number base object'''
+        
+        # Check if valid base (integer between 2 and 12)
+        if type(base_to) is not int:
+            raise TypeError(f'Base should be integer, not {type(base_to)}')
+        
+        if base_to < 2 or base_to > 12:
+            raise ValueError(f'Please input a base between 2 and 12. Selected {base_to}.')
+        
+        # Update the value to the new base and then update the base
+        self._value = self.show_in_base(base_to)
+        self._base = base_to
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # Functions to change to all bases
@@ -243,25 +324,41 @@ class number_base:
     def to_dozenal(self):
         return(self.change_base(12))
     
-    # Create methods to perform operations to object using a different number_base object
-    
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Testing
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-test = number_base("24", 12)
+test = number_base('1E2', 12)
+test2 = number_base('24', 9)
 
-print(test)
-test.change_base(8)
-print(test)
-test.change_value("40")
-print(test)
-print(test.show_in_decimal())
-test.to_elevenary()
-print(test)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# Operation functions - don't include in class but make the inputs number base objects
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# This means we can do this like add(nb1, nb2, nb3) rather than nb1.add(nb2), nb1.add(nb3)
+# Output will be number base object with user defined base (include a default)
+# Use *args so user can have as many objects in calculation
 
-print(test.show_in_decimal())
+# Add number bases together
+#def add(*args):
+#    # Convert both to decimal and add together. Place this in a decimal number base then output in self.base
+#    output = number_base(str(self.convert_to_decimal() + num_base.convert_to_decimal()), 10)
+#    return(output.show_in_base(self.base)) # currently outputting new value but could add to first object
 
-test.to_binary()
-print(test)
-print(test.show_in_decimal())
+# Subtract a number in any base to the current object
+#def subtract(self, num_base):
+#    # Convert both to decimal and add together. Place this in a decimal number base then output in self.base
+#    output = number_base(str(self.convert_to_decimal() - num_base.convert_to_decimal()), 10)
+#    return(output.show_in_base(self.base))
+    
+# Multiply a number in any base to the current object
+#def multiply(self, num_base):
+#    # Convert both to decimal and add together. Place this in a decimal number base then output in self.base
+#    output = number_base(str(self.convert_to_decimal() * num_base.convert_to_decimal()), 10)
+#    return(output.show_in_base(self.base))
+
+# Divide a number in any base to the current object
+#def divide(self, num_base):
+#    # Convert both to decimal and add together. Place this in a decimal number base then output in self.base
+#    output = number_base(str(self.convert_to_decimal() / num_base.convert_to_decimal()), 10)
+#    return(output.show_in_base(self.base))
+
+
