@@ -17,64 +17,80 @@ Created on Tue May 9 2023
 class number_base:
     # Set value of number and base of number in input
     def __init__(self, value, base):
-        '''Set value (string) and base (integer) to set up the number base object
+        '''Set value (string or integer) and base (integer) to set up the number base object
         Perform checks of inputs (types and values) before allowing the user to continue'''
         
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-        # Initial checks
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-        # Base
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+        # Perform checks on inputs
         # Check if valid base (integer between 2 and 12)
-        if type(base) is not int:
-            raise TypeError(f'Base should be integer, not {type(base)}')
+        self.check_base(base) # outputs errors if invalid syntax
         
-        if base < 2 or base > 12:
-            raise ValueError(f'Please input a base between 2 and 12. Selected {base}.')
-            
-        # If valid, set base
+        # Set base - need it for value check
         self._base = base
         
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-        # Value
-        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+        # Check if valid value (and output as it converts integer to string)
+        value = self.check_value(value) # outputs errors if invalid syntax
+            
+        # Set value
+        self._value = value
+            
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+    # Input check functions
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+    def check_base(self, input_base):
+        '''Check if valid base (integer between 2 and 12)'''
+        
+        # Needs to be integer
+        if type(input_base) is not int:
+            raise TypeError(f'Base should be integer, not {type(input_base)}')
+        
+        # Only allow bases between 2 and 12
+        if input_base < 2 or input_base > 12:
+            raise ValueError(f'Please input a base between 2 and 12. Selected {input_base}.')
+            
+    def check_value(self, input_value):
+        '''Check if valid value (integer or string with valid characters depending on base)'''
+        
+        # Allow for integer input, convert to string
+        if type(input_value) is int:
+            input_value = str(input_value)
+        
         # Check if valid value (string with valid digits depending on selected base)
-        if type(value) is not str:
-            raise TypeError(f'Value should be string, not {type(value)}')
+        if type(input_value) is not str:
+            raise TypeError(f'Value should be string, not {type(input_value)}')
 
         # Check if value is valid (allowable characters depend on base. '-' allowed at the front only)
         # Make list of valid digits depending on base
-        valid_digits = list(range(1, min(base, 10))) # valid digits are 1 to (base - 1), or 9. 10, 11 taken care of
+        valid_digits = list(range(0, min(self.base, 10))) # valid digits are 0 to (base - 1), or 9. 10, 11 taken care of
         valid_digits = [str(i) for i in valid_digits] # convert to strings
              
         # Add X and E if the base is high enough
-        if base > 10:
+        if self.base > 10:
             valid_digits.append('X')
-        if base > 11:
+        if self.base > 11:
             valid_digits.append('E')
             
         # Check each digit to see if it is valid - first digit can be '-' for negatives
-        is_valid = [i in valid_digits for i in value] # get boolean for allowable elements
+        is_valid = [i in valid_digits for i in input_value] # get boolean for allowable elements
         
         # First element can be '-' for negatives
-        if value[0] == '-':
+        if input_value[0] == '-':
             is_valid[0] = True
         
         # If any element of is_valid is False then we have bad characters
         # Show them and produce error
         if not all(is_valid):
             non_valid = [] # initialise non-valid list to output
-            for i in range(len(value)): # loop through characters of value
+            for i in range(len(input_value)): # loop through characters of value
                 if not is_valid[i]:
-                   non_valid.append(value[i])
-            raise ValueError(f"Non verified digits identified. They are {non_valid} from input '{value}'")
-        
-        # If valid, set value
-        self._value = value
+                   non_valid.append(input_value[i])
+            raise ValueError(f"Non verified digits identified. They are {non_valid} from input '{input_value}'")
+            
+        return input_value # output the new value (integer converted to string)
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # Restrict access to changing value and base using nb.value or nb.base = foo
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+    # Use property decorator and setter decorator to reference and error user updates
     @property
     def base(self):
         return self._base
@@ -98,7 +114,7 @@ class number_base:
     # Integer output is the value converted to decimal
     def __int__(self):
         return self.convert_to_decimal()
-    
+       
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # Function to convert from a base to decimal
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -134,6 +150,10 @@ class number_base:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     def show_in_base(self, base_to):
         '''Allow the user to see the number in any base, does not change the number base object'''
+        
+        # Check if valid base (integer between 2 and 12)
+        self.check_base(base_to) # outputs errors if invalid syntax
+        
         val = self.convert_to_decimal() # firstly convert value to decimal
         
         # Determine number of digits needed for new base
@@ -226,37 +246,10 @@ class number_base:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     def change_value(self, value_to):
         '''Allow the user to change the value of the number base object'''
-        # Check if valid value (string with valid digits depending on selected base)
-        if type(value_to) is not str:
-            raise TypeError(f'Value should be string, not {type(value_to)}')
-
-        # Check if value is valid (allowable characters depend on base. '-' allowed at the front only)
-        # Make list of valid digits depending on base
-        valid_digits = list(range(1, min(self.base, 10))) # valid digits are 1 to (base - 1), or 9. 10, 11 taken care of
-        valid_digits = [str(i) for i in valid_digits] # convert to strings
-             
-        # Add X and E if the base is high enough
-        if self.base > 10:
-            valid_digits.append('X')
-        if self.base > 11:
-            valid_digits.append('E')
-            
-        # Check each digit to see if it is valid - first digit can be '-' for negatives
-        is_valid = [i in valid_digits for i in value_to] # get boolean for allowable elements
         
-        # First element can be '-' for negatives
-        if value_to[0] == '-':
-            is_valid[0] = True
+        # Check if valid value (and output as it converts integer to string)
+        value_to = self.check_value(value_to) # outputs errors if invalid syntax
         
-        # If any element of is_valid is False then we have bad characters
-        # Show them and produce error
-        if not all(is_valid):
-            non_valid = [] # initialise non-valid list to output
-            for i in range(len(value_to)): # loop through characters of value
-                if not is_valid[i]:
-                   non_valid.append(value_to[i])
-            raise ValueError(f"Non verified digits identified. They are {non_valid} from input '{value_to}'")
-            
         # Just update value once checks are complete
         self._value = value_to
     
@@ -267,12 +260,8 @@ class number_base:
         '''Allow the user to change the base of the number base object'''
         
         # Check if valid base (integer between 2 and 12)
-        if type(base_to) is not int:
-            raise TypeError(f'Base should be integer, not {type(base_to)}')
-        
-        if base_to < 2 or base_to > 12:
-            raise ValueError(f'Please input a base between 2 and 12. Selected {base_to}.')
-        
+        self.check_base(base_to) # outputs errors if invalid syntax
+              
         # Update the value to the new base and then update the base
         self._value = self.show_in_base(base_to)
         self._base = base_to
