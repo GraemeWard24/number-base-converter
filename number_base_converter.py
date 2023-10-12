@@ -345,6 +345,28 @@ test2 = number_base('24', 9)
 # Operation functions - don't include in class but make the inputs number base objects
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # This means we can do this like add(nb1, nb2, nb3) rather than nb1.add(nb2), nb1.add(nb3)
+def add(*args, base = 10):
+    '''Add number base objects together and output in a specified base'''
+       
+    # Get total value of args by summing
+    total = 0 # initialise
+    for nb in args:
+        # Check if the input is a number base object
+        if not isinstance(nb, number_base):
+            raise TypeError(f'Inputs must be number_base objects, not {type(nb)}')
+        
+        # Add all elements
+        total += int(nb) # int is value of nb object in decimal
+    
+    # Now convert total to a number base object with output base
+    out = number_base(total, 10) # total is count in decimal
+    out.change_base(base) # Change base to the output base
+    return out
+
+add_test = add(test, test, number_base(100, 7), base = 12)
+str(add_test)
+add_test.value
+
 # Output will be number base object with user defined base (include a default)
 # Use *args so user can have as many objects in calculation
 
