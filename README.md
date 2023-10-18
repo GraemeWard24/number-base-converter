@@ -16,17 +16,17 @@ Note that the digits for ten (known as dec) and eleven (known as el) are X and E
 There are no packages used so it's an easy plug and play script for fun times.
 
 ## Base names
-2 - binary
-3 - ternary
-4 - quarternary
-5 - quinary
-6 - seximal
-7 - septimal
-8 - octal
-9 - nonary
-10/X - decimal
-11/E - elevenary
-12 - dozenal
+* 2 - binary
+* 3 - ternary
+* 4 - quarternary
+* 5 - quinary
+* 6 - seximal
+* 7 - septimal
+* 8 - octal
+* 9 - nonary
+* 10/X - decimal
+* 11/E - elevenary
+* 12 - dozenal
 
 ## Future enhancements
 * The values can only be integers. I am planning to add floating point numbers in so we can divide.
