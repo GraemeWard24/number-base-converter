@@ -127,11 +127,13 @@ class number_base:
         total = 0 # output sum
         
         # Add flag for if negative number
-        negative_flag = False
+
         value = self.value[:] # get value but a different instance as we don't want to overwrite
         if value[0] == "-":
             value = value[1::] # remove the negative, add it back on at the end
             negative_flag = True
+        else:
+            negative_flag = False
 
         # Loop through characters, convert to decimal, then sum together and output
         for char in value[::-1]: # work in reverse in increasing powers
@@ -168,11 +170,16 @@ class number_base:
 
         val = self.__convert_to_decimal() # firstly convert value to decimal
         
+        # If value is 0, return as 0 (don't want to divide by zero later)
+        if val == 0:
+            return str(val)
+        
         # Check if negative, if so, remove negative and flag as negative to add back on
-        negative_flag = False
         if val < 0:
             val = abs(val)
             negative_flag = True
+        else:
+            negative_flag = False
 
         # Determine number of digits needed for new base
         max_power = 1 # iterator for number of digits required (start at power 1 as power 0 can use power 1 to solve)
@@ -340,7 +347,8 @@ class number_base:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 test = number_base('-1E2', 12)
 test2 = number_base('24', 9)
-
+test3 = number_base(0, 5)
+test3.show_in_binary()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Operation functions - don't include in class but make the inputs number base objects
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -357,6 +365,24 @@ def add(*args, base = 10):
         
         # Add all elements
         total += int(nb) # int is value of nb object in decimal
+    
+    # Now convert total to a number base object with output base
+    out = number_base(total, 10) # total is count in decimal
+    out.change_base(base) # Change base to the output base
+    return out
+
+def multiply(*args, base = 10):
+    '''Multiply number base objects together and output in a specified base'''
+       
+    # Get total value of args by summing
+    total = 1 # initialise
+    for nb in args:
+        # Check if the input is a number base object
+        if not isinstance(nb, number_base):
+            raise TypeError(f'Inputs must be number_base objects, not {type(nb)}')
+        
+        # Add all elements
+        total *= int(nb) # int is value of nb object in decimal
     
     # Now convert total to a number base object with output base
     out = number_base(total, 10) # total is count in decimal
