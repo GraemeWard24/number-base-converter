@@ -8,6 +8,7 @@ Created on Tue May 9 2023
 #import sys
 #import numpy as np
 #import pandas as pd
+import re
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Define the number base class
@@ -42,7 +43,7 @@ class number_base:
         '''Check if valid base (integer between 2 and 12)'''
 
         # Needs to be integer
-        if type(input_base) is not int:
+        if not isinstance(input_base, int):
             raise TypeError(f'Base should be integer, not {type(input_base)}')
 
         # Only allow bases between 2 and 12
@@ -53,16 +54,27 @@ class number_base:
         '''Check if valid value (integer or string with valid characters depending on base)'''
 
         # Allow for integer input, convert to string
-        if type(input_value) is int:
+        if isinstance(input_value, int) or isinstance(input_value, float):
             input_value = str(input_value)
 
         # Check if valid value (string with valid digits depending on selected base)
-        if type(input_value) is not str:
-            raise TypeError(f'Value should be string, not {type(input_value)}')
+        if not isinstance(input_value, str):
+            raise TypeError(f'Value should be integer, float, or string, not {type(input_value)}')
+            
+        # We can have zero or one decimal place. If there is one then flag it as a floating point number
+        num_dec_points = len(re.findall('\.', input_value)) # count of decimal points
+        if num_dec_points == 0:
+            is_float = False
+        elif num_dec_points == 1:
+            is_float = True
+        else:
+            raise ValueError(f'Only 0 or 1 decimal place allowed. "{input_value}" has {num_dec_points}')
 
-        # Check if value is valid (allowable characters depend on base. '-' allowed at the front only)
+        # Check if value is valid, allowable characters depend on base.
+        # '-' allowed at the front only, one '.' is allowed (taken care of above)
         # Make list of valid digits depending on base
-        valid_digits = list(range(0, min(self.base, 10))) # valid digits are 0 to (base - 1), or 9. 10, 11 taken care of
+        # Valid digits are 0 to (base - 1), or 9. 10, 11 taken care of
+        valid_digits = list(range(min(self.base, 10)))
         valid_digits = [str(i) for i in valid_digits] # convert to strings
 
         # Add X and E if the base is high enough
@@ -70,6 +82,9 @@ class number_base:
             valid_digits.append('X')
         if self.base > 11:
             valid_digits.append('E')
+            
+        # We are allowed to have decimal points, if more than one the code will not reach this point
+        valid_digits.append('.')
 
         # Check each digit to see if it is valid - first digit can be '-' for negatives
         is_valid = [i in valid_digits for i in input_value] # get boolean for allowable elements
@@ -77,6 +92,9 @@ class number_base:
         # First element can be '-' for negatives
         if input_value[0] == '-':
             is_valid[0] = True
+            is_negative = True # use in decimal fixes
+        else:
+            is_negative = False
 
         # If any element of is_valid is False then we have bad characters
         # Show them and produce error
@@ -86,8 +104,16 @@ class number_base:
                 if not is_valid[i]:
                     non_valid.append(input_value[i])
             raise ValueError(f"Non verified digits identified. They are {non_valid} from input '{input_value}'")
-
-        return input_value # output the new value (integer converted to string)
+            
+        # Fix up floating format, '.xyz' -> '0.xyz', 'x.' -> 'x', 'x.000...' -> 'x'
+        if is_float:
+            # Add leading zero if none
+            if not is_negative and input_value[0] == ".":
+                input_value = "0" + input_value
+            elif is_negative and input_value[1] == ".":
+                input_value = "-0" + input_value[1:]
+            
+        return input_value # output the new value (number converted to string)
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # Restrict access to changing value and base using nb.value or nb.base = foo
@@ -348,6 +374,8 @@ class number_base:
 test = number_base('-1E2', 12)
 test2 = number_base('24', 9)
 test3 = number_base(0, 5)
+test4 = number_base("12.1", 5)
+test5 = number_base("-.1", 5)
 test3.show_in_binary()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Operation functions - don't include in class but make the inputs number base objects
