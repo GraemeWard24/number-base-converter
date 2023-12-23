@@ -61,14 +61,14 @@ class number_base:
         if not isinstance(input_value, str):
             raise TypeError(f'Value should be integer, float, or string, not {type(input_value)}')
             
-        # We can have zero or one decimal place. If there is one then flag it as a floating point number
-        num_dec_points = len(re.findall('\.', input_value)) # count of decimal points
-        if num_dec_points == 0:
+        # We can have zero or one floating point. If there is one then flag it as a floating point number
+        num_fl_points = len(re.findall('\.', input_value)) # count of floating points
+        if num_fl_points == 0:
             is_float = False
-        elif num_dec_points == 1:
+        elif num_fl_points == 1:
             is_float = True
         else:
-            raise ValueError(f'Only 0 or 1 decimal place allowed. "{input_value}" has {num_dec_points}')
+            raise ValueError(f'Only 0 or 1 floating (decimal) place allowed. "{input_value}" has {num_fl_points}')
 
         # Check if value is valid, allowable characters depend on base.
         # '-' allowed at the front only, one '.' is allowed (taken care of above)
@@ -83,7 +83,7 @@ class number_base:
         if self.base > 11:
             valid_digits.append('E')
             
-        # We are allowed to have decimal points, if more than one the code will not reach this point
+        # We are allowed to have floating points, if more than one the code will not reach this point
         valid_digits.append('.')
 
         # Check each digit to see if it is valid - first digit can be '-' for negatives
@@ -92,7 +92,7 @@ class number_base:
         # First element can be '-' for negatives
         if input_value[0] == '-':
             is_valid[0] = True
-            is_negative = True # use in decimal fixes
+            is_negative = True # use in floating fixes for '-.1'
         else:
             is_negative = False
 
@@ -112,6 +112,11 @@ class number_base:
                 input_value = "0" + input_value
             elif is_negative and input_value[1] == ".":
                 input_value = "-0" + input_value[1:]
+                
+            # Remove trailing zeroes (or floating points as we will convert to integer when we can)
+            # After we remove the floating point as the final digit, stop so we dont convert 10.0 to 1
+            while (input_value[-1] == "0" and len(re.findall('\.', input_value)) == 1) or input_value[-1] == ".":
+                input_value = input_value[:-1]
             
         return input_value # output the new value (number converted to string)
 
@@ -160,6 +165,8 @@ class number_base:
             negative_flag = True
         else:
             negative_flag = False
+            
+        # Determine if a floating point
 
         # Loop through characters, convert to decimal, then sum together and output
         for char in value[::-1]: # work in reverse in increasing powers
@@ -376,6 +383,8 @@ test2 = number_base('24', 9)
 test3 = number_base(0, 5)
 test4 = number_base("12.1", 5)
 test5 = number_base("-.1", 5)
+test6 = number_base("1.20", 6)
+test7 = number_base("10.000", 6)
 test3.show_in_binary()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 # Operation functions - don't include in class but make the inputs number base objects
