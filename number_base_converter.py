@@ -144,17 +144,20 @@ class number_base:
     def __str__(self):
         return f'{self.value} in base {self.base}'
 
-    # Integer output is the value converted to decimal
+    # Integer output is the value converted to decimal coerced to integer
     def __int__(self):
-        return self.__convert_to_decimal()
+        return int(self.__convert_to_decimal())
+
+    # Float output is the value converted to decimal coerced to float
+    def __float__(self):
+        return float(self.__convert_to_decimal())
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # Function to convert from a base to decimal
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     def __convert_to_decimal(self):
         '''Convert the value to decimal, crucial for changing bases'''
-        # Initialise power and output for looping
-        power = 0 # first power
+        # Initialise output for looping
         total = 0 # output sum
         
         # Add flag for if negative number
@@ -167,9 +170,20 @@ class number_base:
             negative_flag = False
             
         # Determine if a floating point
-
+        is_float = len(re.findall('\.', value)) # 0 for integer, 1 for float
+        
+        # If floating point, split into the two bits, otherwise the whole thing is an integer
+        if is_float:
+            integer_part = value.split('.')[0]
+            float_part = value.split('.')[1]
+        else:
+            integer_part = value[:]
+            
+        # Convert integer part to decimal
+        # Final digit is base ** 0, then next in reverse order is base ** 1 and so on
+        power = 0 # first power
         # Loop through characters, convert to decimal, then sum together and output
-        for char in value[::-1]: # work in reverse in increasing powers
+        for char in integer_part[::-1]: # work in reverse in increasing powers
 
             # Convert numbers greater than ten to numeric if the base allows it
             if (self.base > 10) & (char == 'X'):
@@ -177,14 +191,26 @@ class number_base:
             if (self.base > 11) & (char == 'E'):
                 char = 11
 
-            # Check if any characters > base (need to do the same for X and E?)
-            # This check should already be satisfied in __check_value()
-            #if int(char) > self.base:
-            #    print('char ' + char + ' is greater than base ', str(self.base))
-
             # Calculate output in decimal and add to total
             total += int(char) * self.base ** power
             power += 1 # increase power for each element
+        
+        # Convert floating part to decimal if it exists
+        # First digit is base ** -1, then next is base ** -2 and so on)
+        if is_float:
+            power = -1 # first power
+            # Loop through characters, convert to decimal, then sum together and output
+            for char in float_part: # work in forward order in decreasing powers
+    
+                # Convert numbers greater than ten to numeric if the base allows it
+                if (self.base > 10) & (char == 'X'):
+                    char = 10
+                if (self.base > 11) & (char == 'E'):
+                    char = 11
+       
+                # Calculate output in decimal and add to total
+                total += int(char) * self.base ** power
+                power -= 1 # decrease power for each element
 
         # Output the total sum
         if negative_flag:
@@ -213,7 +239,26 @@ class number_base:
             negative_flag = True
         else:
             negative_flag = False
-
+            
+        # Split into integer and float parts
+        # For integer we do num / base. Mod part is 0's value (convert symbols), integer part moves on
+        # Then do new_num (the integer bit) / base. Mod part is 10's value, integer part moves on
+        int_val = int(val)
+        
+        # If integer part is 0 to start, set output as 0 and move on
+        if int_val == 0:
+            int_part = "0"
+        
+        while int_val > 0:
+            int_val = int_val - 1 # dummy code
+        
+        # For float part, we do num * base (technically divide by base ** -1),
+        # Integer part is 0.1's value, mod moves on
+        # Then we do new_num (the mod bit) * base. Integer part is 0.01's value, mod part moves on
+        fl_val = val - int(val)
+        if fl_val != 0:
+            print("float")
+        
         # Determine number of digits needed for new base
         max_power = 1 # iterator for number of digits required (start at power 1 as power 0 can use power 1 to solve)
         flag = False # initialise flag as false to be made true when we find the maximum power
