@@ -119,6 +119,33 @@ class number_base:
                 input_value = input_value[:-1]
             
         return input_value # output the new value (number converted to string)
+    
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+    # Symbol converter function
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+    def __convert_symbol_to_decimal(self, char, base):
+        '''Sometimes we'll need to convert symbols to decimal representations for calculations
+        This function does that so we can just call it when need be'''
+        # Check character and base, if allowable, then convert to decimal representation,
+        # else, convert to integer and output
+        if char == "X" and base > 10:
+            return 10
+        elif char == "E" and base > 11:
+            return 11
+        else:
+            return int(char)
+        
+    def __convert_symbol_from_decimal(self, char, base):
+        '''Sometimes we'll need to convert symbols from decimal representations for calculations
+        This function does that so we can just call it when need be'''
+        # Check character and base, if allowable, then convert to decimal representation,
+        # else, convert to integer and output
+        if char == 10 and base > 10:
+            return "X"
+        elif char == 11 and base > 11:
+            return "E"
+        else:
+            return str(char)
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # Restrict access to changing value and base using nb.value or nb.base = foo
@@ -184,15 +211,12 @@ class number_base:
         power = 0 # first power
         # Loop through characters, convert to decimal, then sum together and output
         for char in integer_part[::-1]: # work in reverse in increasing powers
-
-            # Convert numbers greater than ten to numeric if the base allows it
-            if (self.base > 10) & (char == 'X'):
-                char = 10
-            if (self.base > 11) & (char == 'E'):
-                char = 11
+            
+            # Convert numbers greater than ten to numeric if the base allows it, otherwise just make int
+            char = self.__convert_symbol_to_decimal(char, self.base)
 
             # Calculate output in decimal and add to total
-            total += int(char) * self.base ** power
+            total += char * self.base ** power
             power += 1 # increase power for each element
         
         # Convert floating part to decimal if it exists
@@ -201,15 +225,12 @@ class number_base:
             power = -1 # first power
             # Loop through characters, convert to decimal, then sum together and output
             for char in float_part: # work in forward order in decreasing powers
-    
-                # Convert numbers greater than ten to numeric if the base allows it
-                if (self.base > 10) & (char == 'X'):
-                    char = 10
-                if (self.base > 11) & (char == 'E'):
-                    char = 11
-       
+            
+                # Convert numbers greater than ten to numeric if the base allows it, otherwise just make int
+                char = self.__convert_symbol_to_decimal(char, self.base)
+         
                 # Calculate output in decimal and add to total
-                total += int(char) * self.base ** power
+                total += char * self.base ** power
                 power -= 1 # decrease power for each element
 
         # Output the total sum
@@ -248,51 +269,39 @@ class number_base:
         # If integer part is 0 to start, set output as 0 and move on
         if int_val == 0:
             int_part = "0"
-        
-        while int_val > 0:
-            int_val = int_val - 1 # dummy code
-        
+        else:
+            digits_rev = list() # initialise output list (will build in reverse)
+            while int_val > 0:
+                # Extract mod first before we update int_val
+                new_digit = divmod(int_val, base_to)[1]
+                new_digit = self.__convert_symbol_from_decimal(new_digit, base_to) # Update digit to X or E
+                digits_rev.append(new_digit) # mod part
+                int_val = divmod(int_val, base_to)[0] # int part
+                
+            # Now reverse digits to get int_part as we built up from ones to '10s' and so on
+            # Then convert to strings and concatenate to get the integer digit
+            int_part = ''.join([str(i) for i in digits_rev[::-1]])
+
         # For float part, we do num * base (technically divide by base ** -1),
         # Integer part is 0.1's value, mod moves on
         # Then we do new_num (the mod bit) * base. Integer part is 0.01's value, mod part moves on
         fl_val = val - int(val)
         if fl_val != 0:
-            print("float")
-        
-        # Determine number of digits needed for new base
-        max_power = 1 # iterator for number of digits required (start at power 1 as power 0 can use power 1 to solve)
-        flag = False # initialise flag as false to be made true when we find the maximum power
-        while flag == False:
-            if int(base_to ** max_power / val) == 0: # if the floor of base ^ i / val is 0 then we need more power
-                max_power += 1
-                continue
-            flag = True # we have enough power so exit loop
-
-        # Place in a list 'max_power' elements long
-        powers = list(range(max_power)) # initialise list
-        for i in powers:
-            powers[i] = base_to ** powers[i] # get powers needed to make the number in the particular base
-        powers = powers[::-1] # reverse order so we start with highest powers first
-
-        # Use integer division and mods to loop through and extract the digits in 'base_to'
-        digits = [0] * len(powers) # initialise output (same length as powers)
-        num_left = val # initialise the number left to assign (start with the whole thing)
-        for i in range(len(powers)):
-            digits[i] = num_left // powers[i] # assign to digits[0]
-            num_left = num_left % powers[i] # pass on to next iteration of the loop
-
-        # Concatenate digits together for output
-        output = ''
-        for i in digits:
-            # Replace decimal digit with number base symbol
-            if base_to > 10:
-                if i == 10:
-                    i = 'X'
-                elif i == 11:
-                    i = 'E'
-
-            # Append
-            output += str(i)
+            digits = list() # initialise output list
+            while len(digits) <= 16:
+                # Append digit first before we update fl_val
+                new_digit = int(fl_val * base_to) # add in '10 ** -x' bit
+                new_digit = self.__convert_symbol_from_decimal(new_digit, base_to) # Update digit to X or E
+                digits.append(new_digit) # add in '10 ** -x' bit
+                fl_val = (fl_val * base_to) - int(fl_val * base_to) # new fl_val to calculate next digit
+                
+            # Convert to strings and concatenate to get the floating digit, add a floating point at the start
+            fl_part = '.' + ''.join([str(i) for i in digits])
+        else:
+            fl_part = ''
+            
+        # Concatenate integer and floating parts to get the output
+        output = int_part + fl_part
         
         # Output based on if negative or positive
         if negative_flag:
@@ -428,7 +437,7 @@ test2 = number_base('24', 9)
 test3 = number_base(0, 5)
 test4 = number_base("12.1", 5)
 test5 = number_base("-.1", 5)
-test6 = number_base("1.20", 6)
+test6 = number_base("1.3333333", 10)
 test7 = number_base("10.000", 6)
 test3.show_in_binary()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -446,7 +455,7 @@ def add(*args, base = 10):
             raise TypeError(f'Inputs must be number_base objects, not {type(nb)}')
         
         # Add all elements
-        total += int(nb) # int is value of nb object in decimal
+        total += float(nb) # int is value of nb object in decimal
     
     # Now convert total to a number base object with output base
     out = number_base(total, 10) # total is count in decimal
@@ -464,7 +473,7 @@ def multiply(*args, base = 10):
             raise TypeError(f'Inputs must be number_base objects, not {type(nb)}')
         
         # Add all elements
-        total *= int(nb) # int is value of nb object in decimal
+        total *= float(nb) # int is value of nb object in decimal
     
     # Now convert total to a number base object with output base
     out = number_base(total, 10) # total is count in decimal
